@@ -1,4 +1,4 @@
-CS5330 - Pattern Recogn & Comput Vision
+CS5330 - Pattern Recognition & Computer Vision
 
 Team: Xichen Liu, Hongyu Wan, Xiang Wang, and Sida Zhang
 
