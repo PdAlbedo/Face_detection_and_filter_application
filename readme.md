@@ -23,3 +23,12 @@ dataset.
 
 ● Facial swap filter: detect two sets of facial features from given input, swap their face
 based on their facial features
+
+
+Updates 04262022:
+Facial swaps
+
+Incoming tasks:
+GUI
+Facial features: glasses / masks / caps
+Facial matches: cnn
