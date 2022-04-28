@@ -162,10 +162,10 @@ def main():
                 # Create landmark object
                 landmarks = predictor(image=gray, box=face)
                 # insert bgr into img at desired location and insert mask into black image
-                x1 = int(landmarks.part(39).x)
-                x2 = int(landmarks.part(44).x)
-                y1 = int(landmarks.part(39).y)
-                y2 = int(landmarks.part(44).y)
+                x1 = int(landmarks.part(40).x)
+                x2 = int(landmarks.part(47).x)
+                y1 = int(landmarks.part(40).y)
+                y2 = int(landmarks.part(47).y)
 
                 d = abs(x1-x2)
                 rows, cols = glasses.shape[0], glasses.shape[1]
