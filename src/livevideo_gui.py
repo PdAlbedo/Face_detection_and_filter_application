@@ -15,14 +15,14 @@ class App:
         self.button0 = tkinter.Button(window, text ="gray",width = 50, command =partial(self.setmode, 0))
         self.button0.pack(anchor=tkinter.CENTER)
 
-        self.button1 = tkinter.Button(window, text ="face_detect",width = 50, command = partial(self.setmode, 1))
-        self.button1.pack(anchor=tkinter.CENTER)
+        self.btn_detect = tkinter.Button(window, text ="face_detect",width = 50, command = partial(self.setmode, 1))
+        self.btn_detect.pack(anchor=tkinter.CENTER)
 
-        self.button2 = tkinter.Button(window, text ="exchangeface",width = 50, command = partial(self.setmode, 2))
-        self.button2.pack(anchor=tkinter.CENTER)
+        self.btn_exchange = tkinter.Button(window, text ="exchangeface",width = 50, command = partial(self.setmode, 2))
+        self.btn_exchange.pack(anchor=tkinter.CENTER)
 
-        self.button3 = tkinter.Button(window, text ="filter",width = 50, command = partial(self.setmode, 3))
-        self.button3.pack(anchor=tkinter.CENTER)
+        self.btn_filter = tkinter.Button(window, text ="filter",width = 50, command = partial(self.setmode, 3))
+        self.btn_filter.pack(anchor=tkinter.CENTER)
          # open video source (by default this will try to open the computer webcam)
         self.vid = MyVideoCapture(self.video_source)
 
@@ -35,7 +35,7 @@ class App:
         self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)
 
         # After it is called once, the update method will be automatically called every delay milliseconds
-        self.delay = 15
+        self.delay = 5
         self.update()
 
         self.window.mainloop()
