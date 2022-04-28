@@ -117,6 +117,7 @@ def main():
     if_save = False
     if_swich = False
     if_glass = False
+    if_clown = False
 
     detector = dlib.get_frontal_face_detector()
     # Load the predictor
@@ -198,6 +199,61 @@ def main():
                             frame[j][i][0] = glasses[j - y_offset][i-x_offset][0]
                             frame[j][i][1] = glasses[j - y_offset][i-x_offset][1]
                             frame[j][i][2] = glasses[j - y_offset][i-x_offset][2]
+                            
+        if if_clown:
+            if len(faces) == 0:
+                continue
+            glasses = cv2.imread("clown.png", cv2.IMREAD_UNCHANGED)
+            
+            if len(glasses) == 0:
+                print("the image is not inplaced")
+                continue
+
+            for face in faces:
+                # Create landmark object
+                landmarks = predictor(image=gray, box=face)
+                # insert bgr into img at desired location and insert mask into black image
+                x1 = int(landmarks.part(48).x)
+                x2 = int(landmarks.part(54).x)
+                y1 = int(landmarks.part(48).y)
+                y2 = int(landmarks.part(54).y)
+
+                d = abs(x1-x2)
+                rows, cols = glasses.shape[0], glasses.shape[1]
+                # print(rows, cols) 266 399
+
+                l = abs(y1 - y2)
+
+                y3 = y1 - y2
+                degree = 0
+                if y3 >= 0:
+                    degree = (360 + math.degrees(math.atan2(l, d))) % 360
+                else:
+                    degree = -(360 + math.degrees(math.atan2(l, d))) % 360
+                print(y3, degree)
+
+                ratio = d*3/cols # cols/3*ratio = d
+                dim = (int(cols*ratio), int(rows*ratio))
+                glasses = cv2.resize(glasses, dim, interpolation = cv2.INTER_AREA)
+                # glasses = cv2.rotate(glasses, cv2.ROTATE_23_CLOCKWISE)
+                glasses = imutils.rotate(glasses, degree)
+
+                face_center_y = int((y1+y2)/2)
+                face_center_x = int((x1+x2)/2)
+                rows, cols = glasses.shape[0], glasses.shape[1]
+
+                x_offset = face_center_x - int(cols/2)
+                y_offset = face_center_y - int(rows/2)
+
+                for i in range(x_offset, x_offset + cols):
+                    for j in range(y_offset, y_offset + rows):
+                        if (i > 0 and i < frame.shape[1] and j > 0 and j < frame.shape[0] 
+                        and glasses[j - y_offset][i-x_offset][3] != 0):
+                            # print(i, j)
+                            frame[j][i][0] = glasses[j - y_offset][i-x_offset][0]
+                            frame[j][i][1] = glasses[j - y_offset][i-x_offset][1]
+                            frame[j][i][2] = glasses[j - y_offset][i-x_offset][2]
+            
         if if_swich:
             if len(faces) < 2:
                 if_swich = False
@@ -265,6 +321,12 @@ def main():
                 if_glass = False
             else:
                 if_glass = True
+        if k == 99:
+            print("pressed c")
+            if if_clown == True:
+                if_clown = False
+            else:
+                if_clown = True
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
