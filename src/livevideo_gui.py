@@ -1,12 +1,16 @@
 import tkinter
-import cv2
 import PIL.Image, PIL.ImageTk
 import time
 from functools import partial
 import dlib
 import imutils
-import numpy
+import numpy as np
 import math
+from torch.utils.data import DataLoader
+import model_build
+import cv2
+import torch
+
 DETECTOR = dlib.get_frontal_face_detector()
 PREDICTOR = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
 
@@ -35,7 +39,7 @@ ALIGN_POINTS = (LEFT_BROW_POINTS + RIGHT_EYE_POINTS + LEFT_EYE_POINTS +
 
 if_glass = False
 if_clown = False
-
+torch.manual_seed(888)
 
 class App:
     def __init__(self, window, window_title, video_source=0):
@@ -57,6 +61,13 @@ class App:
         self.btn_filter = tkinter.Button(window, text="filter", width=50, command=partial(self.setmode_filter, 3))
         self.btn_filter.pack(anchor=tkinter.CENTER, side="bottom")
 
+
+        self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
+        self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)
+
+        self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=partial(self.setmode, 4))
+        self.btn_matching.pack(anchor=tkinter.CENTER, expand=True)
+
         #check button
         self.list_itmes = tkinter.StringVar()
         self.list_itmes.set(('glass', 'clown'))
@@ -75,6 +86,10 @@ class App:
 
         self.window.mainloop()
 
+    def snapshot(self):
+        ret, frame = self.vid.get_frame()
+        if ret:
+            cv2.imwrite("../"+"matching/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
     def setmode(self, number):
         self.mode = number
 
@@ -143,6 +158,10 @@ class MyVideoCapture:
             elif mode == 3:
                 output_0, faces = get_facedetect(frame)
                 output = get_filtered(frame, faces)
+            elif mode == 4:
+                output = frame
+                get_matching_image()
+                mode == 1
             else:
                 output = frame
             if ret:
@@ -183,7 +202,7 @@ def get_facedetect(input):
                 x = landmarks.part(n).x
                 y = landmarks.part(n).y
                 # Draw a circle
-                cv2.circle(img=output, center=(x, y), radius=3, color=(0, 255, 0), thickness=-1)
+                cv2.circle(img=output, center=(x, y), radius=1, color=(0, 255, 0), thickness=-1)
     return output, faces
 
 
@@ -193,8 +212,8 @@ def get_exchangeface(input, faces):
         print("not enough faces")
 
     else:
-        landmarks1 = numpy.matrix([[p.x, p.y] for p in PREDICTOR(input, faces[0]).parts()])
-        landmarks2 = numpy.matrix([[p.x, p.y] for p in PREDICTOR(input, faces[1]).parts()])
+        landmarks1 = np.matrix([[p.x, p.y] for p in PREDICTOR(input, faces[0]).parts()])
+        landmarks2 = np.matrix([[p.x, p.y] for p in PREDICTOR(input, faces[1]).parts()])
 
         M1 = transformation_from_points(landmarks1[ALIGN_POINTS],
                                         landmarks2[ALIGN_POINTS])
@@ -206,9 +225,9 @@ def get_exchangeface(input, faces):
         mask2 = get_face_mask(input, landmarks1)
         warped_mask1 = warp_im(mask1, M1, input.shape)
         warped_mask2 = warp_im(mask2, M2, input.shape)
-        combined_mask1 = numpy.max([get_face_mask(input, landmarks1), warped_mask1],
+        combined_mask1 = np.max([get_face_mask(input, landmarks1), warped_mask1],
                                    axis=0)
-        combined_mask2 = numpy.max([get_face_mask(input, landmarks2), warped_mask2],
+        combined_mask2 = np.max([get_face_mask(input, landmarks2), warped_mask2],
                                    axis=0)
         warped_im1 = warp_im(input, M1, input.shape)
         warped_im2 = warp_im(input, M2, input.shape)
@@ -221,7 +240,7 @@ def get_exchangeface(input, faces):
 
         cv2.imwrite('output.jpg', output_im)
 
-        output = output_im.astype(numpy.uint8)
+        output = output_im.astype(np.uint8)
     return output
 
 
@@ -331,14 +350,46 @@ def get_filtered(input, faces):
                                 output[j][i][2] = glasses[j - y_offset][i - x_offset][2]
     return output
 
+def get_matching_image():
+    model_build.generate_csv('image', 'image_info.csv')
+    model_build.generate_csv('test', 'test_info.csv')
+
+    network = model_build.MyNetwork()
+    network.eval()
+
+    cele_faces = model_build.CustomizedDataset(annotations_file = '../data/image_info.csv',
+                                               img_dir = '../data/image')
+    cele_faces_loader = DataLoader(dataset = cele_faces,
+                                   batch_size = 100,
+                                   shuffle = False,
+                                   num_workers = 4)
+
+    test_face = model_build.CustomizedDataset(annotations_file = '../data/test_info.csv',
+                                              img_dir = '../data/test')
+    test_face_loader = DataLoader(dataset = test_face,
+                                  batch_size = 100,
+                                  shuffle = False,
+                                  num_workers = 4)
+
+    results, targets = build_embedding_space(network, cele_faces_loader)
+    results_t, targets_t = build_embedding_space(network, test_face_loader)
+
+    # print(type(results_t[0].detach().numpy()))
+    # print(type(results[0].detach().numpy()))
+    print('\n')
+    print('\n')
+    img = cv2.imread(nn(results, targets, results_t[0]))
+    cv2.imshow('tmp', img)
+    return img
+
 def draw_convex_hull(im, points, color):
     points = cv2.convexHull(points)
     cv2.fillConvexPoly(im, points, color=color)
 
 def correct_colours(im1, im2, landmarks1):
-    blur_amount = COLOUR_CORRECT_BLUR_FRAC * numpy.linalg.norm(
-                              numpy.mean(landmarks1[LEFT_EYE_POINTS], axis=0) -
-                              numpy.mean(landmarks1[RIGHT_EYE_POINTS], axis=0))
+    blur_amount = COLOUR_CORRECT_BLUR_FRAC * np.linalg.norm(
+                              np.mean(landmarks1[LEFT_EYE_POINTS], axis=0) -
+                              np.mean(landmarks1[RIGHT_EYE_POINTS], axis=0))
     blur_amount = int(blur_amount)
     if blur_amount % 2 == 0:
         blur_amount += 1
@@ -348,11 +399,11 @@ def correct_colours(im1, im2, landmarks1):
     # Avoid divide-by-zero errors.
     im2_blur += (128 * (im2_blur <= 1.0)).astype(im2_blur.dtype)
 
-    return (im2.astype(numpy.float64) * im1_blur.astype(numpy.float64) /
-                                                im2_blur.astype(numpy.float64))
+    return (im2.astype(np.float64) * im1_blur.astype(np.float64) /
+                                                im2_blur.astype(np.float64))
 
 def warp_im(im, M, dshape):
-    output_im = numpy.zeros(dshape, dtype=im.dtype)
+    output_im = np.zeros(dshape, dtype=im.dtype)
     cv2.warpAffine(im,
                    M[:2],
                    (dshape[1], dshape[0]),
@@ -362,14 +413,14 @@ def warp_im(im, M, dshape):
     return output_im
 
 def get_face_mask(im, landmarks):
-    im = numpy.zeros(im.shape[:2], dtype=numpy.float64)
+    im = np.zeros(im.shape[:2], dtype=np.float64)
 
     for group in OVERLAY_POINTS:
         draw_convex_hull(im,
                          landmarks[group],
                          color=1)
 
-    im = numpy.array([im, im, im]).transpose((1, 2, 0))
+    im = np.array([im, im, im]).transpose((1, 2, 0))
 
     im = (cv2.GaussianBlur(im, (FEATHER_AMOUNT, FEATHER_AMOUNT), 0) > 0) * 1.0
     im = cv2.GaussianBlur(im, (FEATHER_AMOUNT, FEATHER_AMOUNT), 0)
@@ -387,20 +438,20 @@ def transformation_from_points(points1, points2):
     # the following for more details:
     #   https://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem
 
-    points1 = points1.astype(numpy.float64)
-    points2 = points2.astype(numpy.float64)
+    points1 = points1.astype(np.float64)
+    points2 = points2.astype(np.float64)
 
-    c1 = numpy.mean(points1, axis=0)
-    c2 = numpy.mean(points2, axis=0)
+    c1 = np.mean(points1, axis=0)
+    c2 = np.mean(points2, axis=0)
     points1 -= c1
     points2 -= c2
 
-    s1 = numpy.std(points1)
-    s2 = numpy.std(points2)
+    s1 = np.std(points1)
+    s2 = np.std(points2)
     points1 /= s1
     points2 /= s2
 
-    U, S, Vt = numpy.linalg.svd(points1.T * points2)
+    U, S, Vt = np.linalg.svd(points1.T * points2)
 
     # The R we seek is in fact the transpose of the one given by U * Vt. This
     # is because the above formulation assumes the matrix goes on the right
@@ -408,10 +459,50 @@ def transformation_from_points(points1, points2):
     # left (with column vectors).
     R = (U * Vt).T
 
-    return numpy.vstack([numpy.hstack(((s2 / s1) * R,
+    return np.vstack([np.hstack(((s2 / s1) * R,
                                        c2.T - (s2 / s1) * R * c1.T)),
-                         numpy.matrix([0., 0., 1.])])
+                         np.matrix([0., 0., 1.])])
 
+def ssd(a, b):
+    d = np.sum((a - b) ** 2)
+    return d
+
+
+def nn(results, targets, a):
+    min_dis = float('inf')
+    file_name = None
+    for i in range(len(results)):
+        d = ssd(a.detach().numpy(), results[i].detach().numpy())
+        print("%.2f" % d, end = " ")
+        if d < min_dis:
+            min_dis = d
+            file_name = targets[i]
+
+    return file_name
+
+
+def build_embedding_space(model, dataloader):
+    model.eval()
+    results = []
+    targets = []
+    b = 0
+    for data, target in dataloader:
+        output = model(data)
+        print("\nBatch %d:" % b)
+        print("Input batch size: ", end = "")
+        print(data.shape)
+        print("Apply the model with 50-node dense layer to the data, "
+              "we have the returned output with the shape of: ", end = "")
+        print(output.shape)
+        b += 1
+
+        for i in range(len(output)):
+            results.append(output[i])
+            targets.append(target[i])
+    print("\nShape of the output nodes from the model: ", end = "")
+    print(torch.stack(results).shape)
+
+    return results, targets
 # Create a window and pass it to the Application object
 def main():
     App(tkinter.Tk(), "Tkinter and OpenCV")
