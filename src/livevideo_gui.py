@@ -65,7 +65,7 @@ class App:
         self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
         self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)
 
-        self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=partial(self.setmode, 4))
+        self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=self.getmatching_image)
         self.btn_matching.pack(anchor=tkinter.CENTER, expand=True)
 
         #check button
@@ -119,6 +119,36 @@ class App:
 
         self.window.after(self.delay, self.update)
 
+    def getmatching_image(self):
+        model_build.generate_csv('image', 'image_info.csv')
+        model_build.generate_csv('test', 'test_info.csv')
+
+        network = model_build.MyNetwork()
+        network.eval()
+
+        cele_faces = model_build.CustomizedDataset(annotations_file='../data/image_info.csv',
+                                                   img_dir='../data/image')
+        cele_faces_loader = DataLoader(dataset=cele_faces,
+                                       batch_size=100,
+                                       shuffle=False,
+                                       num_workers=4)
+
+        test_face = model_build.CustomizedDataset(annotations_file='../data/test_info.csv',
+                                                  img_dir='../data/test')
+        test_face_loader = DataLoader(dataset=test_face,
+                                      batch_size=100,
+                                      shuffle=False,
+                                      num_workers=4)
+
+        results, targets = build_embedding_space(network, cele_faces_loader)
+        results_t, targets_t = build_embedding_space(network, test_face_loader)
+
+        # print(type(results_t[0].detach().numpy()))
+        # print(type(results[0].detach().numpy()))
+        print('\n')
+        print('\n')
+        img = cv2.imread(nn(results, targets, results_t[0]))
+        cv2.imshow('tmp', img)
 
 class MyVideoCapture:
     def __init__(self, video_source=0):
@@ -158,10 +188,8 @@ class MyVideoCapture:
             elif mode == 3:
                 output_0, faces = get_facedetect(frame)
                 output = get_filtered(frame, faces)
-            elif mode == 4:
-                output = frame
-                get_matching_image()
-                mode == 1
+            # elif mode == 4:
+            #     output = frame
             else:
                 output = frame
             if ret:
@@ -350,37 +378,37 @@ def get_filtered(input, faces):
                                 output[j][i][2] = glasses[j - y_offset][i - x_offset][2]
     return output
 
-def get_matching_image():
-    model_build.generate_csv('image', 'image_info.csv')
-    model_build.generate_csv('test', 'test_info.csv')
-
-    network = model_build.MyNetwork()
-    network.eval()
-
-    cele_faces = model_build.CustomizedDataset(annotations_file = '../data/image_info.csv',
-                                               img_dir = '../data/image')
-    cele_faces_loader = DataLoader(dataset = cele_faces,
-                                   batch_size = 100,
-                                   shuffle = False,
-                                   num_workers = 4)
-
-    test_face = model_build.CustomizedDataset(annotations_file = '../data/test_info.csv',
-                                              img_dir = '../data/test')
-    test_face_loader = DataLoader(dataset = test_face,
-                                  batch_size = 100,
-                                  shuffle = False,
-                                  num_workers = 4)
-
-    results, targets = build_embedding_space(network, cele_faces_loader)
-    results_t, targets_t = build_embedding_space(network, test_face_loader)
-
-    # print(type(results_t[0].detach().numpy()))
-    # print(type(results[0].detach().numpy()))
-    print('\n')
-    print('\n')
-    img = cv2.imread(nn(results, targets, results_t[0]))
-    cv2.imshow('tmp', img)
-    return img
+# def get_matching_image():
+#     model_build.generate_csv('image', 'image_info.csv')
+#     model_build.generate_csv('test', 'test_info.csv')
+#
+#     network = model_build.MyNetwork()
+#     network.eval()
+#
+#     cele_faces = model_build.CustomizedDataset(annotations_file = '../data/image_info.csv',
+#                                                img_dir = '../data/image')
+#     cele_faces_loader = DataLoader(dataset = cele_faces,
+#                                    batch_size = 100,
+#                                    shuffle = False,
+#                                    num_workers = 4)
+#
+#     test_face = model_build.CustomizedDataset(annotations_file = '../data/test_info.csv',
+#                                               img_dir = '../data/test')
+#     test_face_loader = DataLoader(dataset = test_face,
+#                                   batch_size = 100,
+#                                   shuffle = False,
+#                                   num_workers = 4)
+#
+#     results, targets = build_embedding_space(network, cele_faces_loader)
+#     results_t, targets_t = build_embedding_space(network, test_face_loader)
+#
+#     # print(type(results_t[0].detach().numpy()))
+#     # print(type(results[0].detach().numpy()))
+#     print('\n')
+#     print('\n')
+#     img = cv2.imread(nn(results, targets, results_t[0]))
+#     cv2.imshow('tmp', img)
+#     return img
 
 def draw_convex_hull(im, points, color):
     points = cv2.convexHull(points)
