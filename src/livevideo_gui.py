@@ -63,11 +63,6 @@ class App:
         self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes)
         self.filterchoose.pack(anchor=tkinter.CENTER, side="bottom")
 
-        # self.filterchoose = tkinter.Checkbutton(window, text="if_clown", variable=if_clown, \
-        #                  onvalue=1, offvalue=0, height=5, \
-        #                  width=20)
-        # self.filterchoose.pack(anchor=tkinter.CENTER, side="bottom")
-        # open video source (by default this will try to open the computer webcam)
         self.vid = MyVideoCapture(self.video_source)
 
         # Create a canvas that can fit the above video source size
@@ -143,7 +138,8 @@ class MyVideoCapture:
             elif mode == 1:
                 output, faces = get_facedetect(frame)
             elif mode == 2:
-                output = get_exchangeface(frame)
+                output_0, faces = get_facedetect(frame)
+                output = get_exchangeface(frame, faces)
             elif mode == 3:
                 output_0, faces = get_facedetect(frame)
                 output = get_filtered(frame, faces)
@@ -191,8 +187,41 @@ def get_facedetect(input):
     return output, faces
 
 
-def get_exchangeface(input):
+def get_exchangeface(input, faces):
     output = input
+    if len(faces) < 2:
+        print("not enough faces")
+
+    else:
+        landmarks1 = numpy.matrix([[p.x, p.y] for p in PREDICTOR(input, faces[0]).parts()])
+        landmarks2 = numpy.matrix([[p.x, p.y] for p in PREDICTOR(input, faces[1]).parts()])
+
+        M1 = transformation_from_points(landmarks1[ALIGN_POINTS],
+                                        landmarks2[ALIGN_POINTS])
+
+        M2 = transformation_from_points(landmarks2[ALIGN_POINTS],
+                                        landmarks1[ALIGN_POINTS])
+
+        mask1 = get_face_mask(input, landmarks2)
+        mask2 = get_face_mask(input, landmarks1)
+        warped_mask1 = warp_im(mask1, M1, input.shape)
+        warped_mask2 = warp_im(mask2, M2, input.shape)
+        combined_mask1 = numpy.max([get_face_mask(input, landmarks1), warped_mask1],
+                                   axis=0)
+        combined_mask2 = numpy.max([get_face_mask(input, landmarks2), warped_mask2],
+                                   axis=0)
+        warped_im1 = warp_im(input, M1, input.shape)
+        warped_im2 = warp_im(input, M2, input.shape)
+        warped_corrected_im1 = correct_colours(input, warped_im1, landmarks1)
+        warped_corrected_im2 = correct_colours(input, warped_im2, landmarks2)
+
+        output_im = input * (1.0 - combined_mask1) + warped_corrected_im1 * combined_mask1
+        # output_im = frame * (1.0  - combined_mask1)*(1.0- combined_mask2) + warped_corrected_im2 * combined_mask2 + warped_corrected_im1 * combined_mask1
+        output_im = output_im * (1.0 - combined_mask2) + warped_corrected_im2 * combined_mask2
+
+        cv2.imwrite('output.jpg', output_im)
+
+        output = output_im.astype(numpy.uint8)
     return output
 
 
