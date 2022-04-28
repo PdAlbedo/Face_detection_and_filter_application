@@ -2,18 +2,21 @@ import tkinter
 import cv2
 import PIL.Image, PIL.ImageTk
 import time
-
+from functools import partial
 
 class App:
     def __init__(self, window, window_title, video_source=0):
-        self.model = 0
+        self.mode = 0
         self.window = window
         self.window.title(window_title)
         self.video_source = video_source
 
         #Button
-        self.button = tkinter.Button(window, text ="gray",width = 50, command = MyVideoCapture.set_mode(MyVideoCapture,1))
-        self.button.pack(anchor=tkinter.CENTER, expand=True)
+        self.button = tkinter.Button(window, text ="gray",width = 50, command =partial(self.setmode, 0))
+        self.button.pack(anchor=tkinter.CENTER)
+
+        self.buttonb = tkinter.Button(window, text ="initial",width = 50, command = partial(self.setmode, 1))
+        self.buttonb.pack(anchor=tkinter.CENTER)
          # open video source (by default this will try to open the computer webcam)
         self.vid = MyVideoCapture(self.video_source)
 
@@ -38,10 +41,14 @@ class App:
         if ret:
             cv2.imwrite("frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
 
+    def setmode(self,number):
+        self.mode=number
+        print(self.mode)
+
     def update(self):
         # Get a frame from the video source
         ret, frame= self.vid.get_frame()
-        ret, output = self.vid.get_output()
+        ret, output = self.vid.get_output(self.mode)
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
@@ -75,14 +82,16 @@ class MyVideoCapture:
         else:
             return (ret, None)
 
-    def get_output(self):
+    def get_output(self, mode):
         if self.vid.isOpened():
             ret, frame = self.vid.read()
             frame = cv2.resize(frame, (400, 400))
-            output =frame
-            print(self.mode)
-            if self.mode==1:
+            if mode == 0:
+                output = frame
+            if mode == 1:
                 output = get_gray(frame)
+            else:
+                output = frame
             if ret:
                # Return a boolean success flag and the current frame converted to BGR
                 return (ret, cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
@@ -91,8 +100,6 @@ class MyVideoCapture:
         else:
             return (ret, None)
 
-    def set_mode(self, number):
-        self.set_mode() = number
 
 
 
