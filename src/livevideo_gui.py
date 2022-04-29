@@ -10,7 +10,8 @@ from torch.utils.data import DataLoader
 import model_build
 import cv2
 import torch
-
+import multiprocessing
+import sys
 DETECTOR = dlib.get_frontal_face_detector()
 PREDICTOR = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
 
@@ -68,14 +69,18 @@ class App:
         self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=self.getmatching_image)
         self.btn_matching.pack(anchor=tkinter.CENTER, expand=True)
 
+
         #check button
         self.list_itmes = tkinter.StringVar()
         self.list_itmes.set(('glass', 'clown'))
-        self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes)
+        self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes, width=5, height=5)
         self.filterchoose.pack(anchor=tkinter.CENTER, side="bottom")
 
         self.vid = MyVideoCapture(self.video_source)
-
+        # text
+        self.Text = tkinter.Text(window, wrap='word', width=100, height=5)
+        self.Text.pack(anchor=tkinter.CENTER)
+        self.Text.tag_configure('stderr', foreground='#b22222')
         # Create a canvas that can fit the above video source size
         self.canvas = tkinter.Canvas(window, width=1600, height=1000)
         self.canvas.pack()
@@ -116,10 +121,17 @@ class App:
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
             self.photo_output = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(output))
             self.canvas.create_image(900, 0, image=self.photo_output, anchor=tkinter.NW)
-
         self.window.after(self.delay, self.update)
+        sys.stdout = TextRedirector(self.Text, 'stdout')
+
+
+    def multiprocess(self):
+        p1 = multiprocessing.Process(target=self.getmatching_image)
+        p1.start()
+        return
 
     def getmatching_image(self):
+        print('start Matching')
         model_build.generate_csv('image', 'image_info.csv')
         model_build.generate_csv('test', 'test_info.csv')
 
@@ -149,6 +161,17 @@ class App:
         print('\n')
         img = cv2.imread(nn(results, targets, results_t[0]))
         cv2.imshow('tmp', img)
+
+class TextRedirector(object):
+    def __init__(self, widget, tag='stdout'):
+        self.widget = widget
+        self.tag = tag
+
+    def write(self, str):
+        self.widget.configure(state='normal')
+        self.widget.insert(tkinter.END, str, (self.tag,))    # (self.tag,) 是设置配置
+        self.widget.see(tkinter.END)
+        self.widget.configure(state='disabled')
 
 class MyVideoCapture:
     def __init__(self, video_source=0):
@@ -206,11 +229,13 @@ class MyVideoCapture:
 
 
 def get_gray(input):
+    print('start grayscale')
     output = cv2.cvtColor(input, cv2.COLOR_BGR2GRAY)
     return output
 
 
 def get_facedetect(input):
+    print('start face detect')
     output = input
     gray = cv2.cvtColor(src=input, code=cv2.COLOR_BGR2GRAY)
     # Use detector to find landmarks
@@ -273,6 +298,7 @@ def get_exchangeface(input, faces):
 
 
 def get_filtered(input, faces):
+    print('start filter')
     output = input
     gray = cv2.cvtColor(src=input, code=cv2.COLOR_BGR2GRAY)
     if if_glass:
@@ -378,37 +404,6 @@ def get_filtered(input, faces):
                                 output[j][i][2] = glasses[j - y_offset][i - x_offset][2]
     return output
 
-# def get_matching_image():
-#     model_build.generate_csv('image', 'image_info.csv')
-#     model_build.generate_csv('test', 'test_info.csv')
-#
-#     network = model_build.MyNetwork()
-#     network.eval()
-#
-#     cele_faces = model_build.CustomizedDataset(annotations_file = '../data/image_info.csv',
-#                                                img_dir = '../data/image')
-#     cele_faces_loader = DataLoader(dataset = cele_faces,
-#                                    batch_size = 100,
-#                                    shuffle = False,
-#                                    num_workers = 4)
-#
-#     test_face = model_build.CustomizedDataset(annotations_file = '../data/test_info.csv',
-#                                               img_dir = '../data/test')
-#     test_face_loader = DataLoader(dataset = test_face,
-#                                   batch_size = 100,
-#                                   shuffle = False,
-#                                   num_workers = 4)
-#
-#     results, targets = build_embedding_space(network, cele_faces_loader)
-#     results_t, targets_t = build_embedding_space(network, test_face_loader)
-#
-#     # print(type(results_t[0].detach().numpy()))
-#     # print(type(results[0].detach().numpy()))
-#     print('\n')
-#     print('\n')
-#     img = cv2.imread(nn(results, targets, results_t[0]))
-#     cv2.imshow('tmp', img)
-#     return img
 
 def draw_convex_hull(im, points, color):
     points = cv2.convexHull(points)
@@ -531,9 +526,12 @@ def build_embedding_space(model, dataloader):
     print(torch.stack(results).shape)
 
     return results, targets
+def print_output():
+    sys.stdout = TextRedirector(App.Text, 'stdout')
 # Create a window and pass it to the Application object
 def main():
     App(tkinter.Tk(), "Tkinter and OpenCV")
+
 
 
 if __name__ == '__main__':
