@@ -12,6 +12,9 @@ import cv2
 import torch
 import multiprocessing
 import sys
+import csv
+import time
+
 DETECTOR = dlib.get_frontal_face_detector()
 PREDICTOR = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
 
@@ -65,6 +68,9 @@ class App:
 
         self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
         self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)
+
+        self.btn_savecsv= tkinter.Button(window, text="Train_dataset", width=50, command=self.get_traintocsv)
+        self.btn_savecsv.pack(anchor=tkinter.CENTER, expand=True)
 
         self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=self.getmatching_image)
         self.btn_matching.pack(anchor=tkinter.CENTER, expand=True)
@@ -131,9 +137,7 @@ class App:
         p1.start()
         return
 
-    # def get_traintocsv(self):
-
-    def getmatching_image(self):
+    def get_traintocsv(self):
         print('start Matching')
         model_build.generate_csv('image', 'image_info.csv')
         model_build.generate_csv('test', 'test_info.csv')
@@ -148,22 +152,62 @@ class App:
                                        shuffle=False,
                                        num_workers=4)
 
+
+        results, targets = build_embedding_space(network, cele_faces_loader)
+        with open('../csv/results.csv',"w",newline='') as f:
+            writer = csv.writer(f)
+            for row in results:
+                rows=row.cpu().detach().numpy().tolist()
+                writer.writerow(rows)
+        with open('../csv/targets.csv',"w",newline='') as f:
+            writer = csv.writer(f,delimiter=' ')
+            # for row in targets:
+            #     print(row)
+            writer.writerows(targets)
+
+    def getmatching_image(self):
+        print('start Matching')
+        targets = []
+        results = []
+        with open('../csv/results.csv', "r", newline='') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+            # data = list(data)
+            data = np.array(data)
+            data = data.astype(float)
+            data = torch.Tensor(data)
+            for line in data:
+                # arr_2d = np.reshape(line, (28, 28))
+                # tensor = torch.Tensor(line)
+                results.append(line)
+
+        # read label
+        with open('../csv/targets.csv', "r", newline='') as f:
+            reader = csv.reader(f)
+            # label = list(reader)
+            for row in reader:
+                targets.append(row)
+            targets=str(targets)
+
+        network = model_build.MyNetwork()
+        network.eval()
+
+
         test_face = model_build.CustomizedDataset(annotations_file='../data/test_info.csv',
                                                   img_dir='../data/test')
         test_face_loader = DataLoader(dataset=test_face,
-                                      batch_size=100,
+                                      batch_size=1,
                                       shuffle=False,
                                       num_workers=4)
 
-        results, targets = build_embedding_space(network, cele_faces_loader)
+        # results, targets = build_embedding_space(network, cele_faces_loader)
         results_t, targets_t = build_embedding_space(network, test_face_loader)
 
         # print(type(results_t[0].detach().numpy()))
         # print(type(results[0].detach().numpy()))
-        print('\n')
-        print('\n')
-        img = cv2.imread(nn(results, targets, results_t[0]))
-        cv2.imshow('tmp', img)
+        print(nn(results, targets, results_t[0]))
+        # img = cv2.imread(nn(results, targets, results_t[0]))
+        # cv2.imshow('tmp', img)
 
 class TextRedirector(object):
     def __init__(self, widget, tag='stdout'):
@@ -495,6 +539,7 @@ def ssd(a, b):
 
 
 def nn(results, targets, a):
+    t = time.time()
     min_dis = float('inf')
     file_name = None
     for i in range(len(results)):
@@ -503,7 +548,8 @@ def nn(results, targets, a):
         if d < min_dis:
             min_dis = d
             file_name = targets[i]
-
+    c = time.time()
+    print('\n', c - t)
     return file_name
 
 
