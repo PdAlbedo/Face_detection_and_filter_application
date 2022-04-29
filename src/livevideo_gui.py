@@ -175,7 +175,7 @@ class App:
             # data = list(data)
             data = np.array(data)
             data = data.astype(float)
-            data = torch.Tensor(data)
+            # data = torch.Tensor(data)
             for line in data:
                 # arr_2d = np.reshape(line, (28, 28))
                 # tensor = torch.Tensor(line)
@@ -202,6 +202,9 @@ class App:
 
         # results, targets = build_embedding_space(network, cele_faces_loader)
         results_t, targets_t = build_embedding_space(network, test_face_loader)
+
+        print(results)
+
 
         # print(type(results_t[0].detach().numpy()))
         # print(type(results[0].detach().numpy()))
@@ -539,11 +542,13 @@ def ssd(a, b):
 
 
 def nn(results, targets, a):
+    print(type(results))
+    print(len(results))
     t = time.time()
     min_dis = float('inf')
     file_name = None
     for i in range(len(results)):
-        d = ssd(a.detach().numpy(), results[i].detach().numpy())
+        d = ssd(a.detach().numpy(), results[i])
         print("%.2f" % d, end = " ")
         if d < min_dis:
             min_dis = d
@@ -560,18 +565,18 @@ def build_embedding_space(model, dataloader):
     b = 0
     for data, target in dataloader:
         output = model(data)
-        print("\nBatch %d:" % b)
-        print("Input batch size: ", end = "")
-        print(data.shape)
-        print("Apply the model with 50-node dense layer to the data, "
-              "we have the returned output with the shape of: ", end = "")
-        print(output.shape)
+        # print("\nBatch %d:" % b)
+        # print("Input batch size: ", end = "")
+        # print(data.shape)
+        # print("Apply the model with 50-node dense layer to the data, "
+        #       "we have the returned output with the shape of: ", end = "")
+        # print(output.shape)
         b += 1
 
         for i in range(len(output)):
             results.append(output[i])
             targets.append(target[i])
-    print("\nShape of the output nodes from the model: ", end = "")
+    # print("\nShape of the output nodes from the model: ", end = "")
     print(torch.stack(results).shape)
 
     return results, targets

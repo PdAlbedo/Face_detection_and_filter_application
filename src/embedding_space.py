@@ -6,6 +6,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 import model_build
+import time
 
 torch.manual_seed(888)
 
@@ -15,6 +16,10 @@ def ssd(a, b):
 
 
 def nn(results, targets, a):
+    print(results)
+    print(type(results))
+    print(len(results))
+    t = time.time()
     min_dis = float('inf')
     file_name = None
     for i in range(len(results)):
@@ -24,6 +29,8 @@ def nn(results, targets, a):
             min_dis = d
             file_name = targets[i]
 
+    c = time.time()
+    print('\n', c - t)
     return file_name
 
 
@@ -74,6 +81,8 @@ def main():
 
     results, targets = build_embedding_space(network, cele_faces_loader)
     results_t, targets_t = build_embedding_space(network, test_face_loader)
+
+
 
     # print(type(results_t[0].detach().numpy()))
     # print(type(results[0].detach().numpy()))
