@@ -123,12 +123,15 @@ class App:
             self.canvas.create_image(900, 0, image=self.photo_output, anchor=tkinter.NW)
         self.window.after(self.delay, self.update)
         sys.stdout = TextRedirector(self.Text, 'stdout')
+        sys.stderr = TextRedirector(self.Text, 'stderr')
 
 
     def multiprocess(self):
         p1 = multiprocessing.Process(target=self.getmatching_image)
         p1.start()
         return
+
+    # def get_traintocsv(self):
 
     def getmatching_image(self):
         print('start Matching')
@@ -526,8 +529,7 @@ def build_embedding_space(model, dataloader):
     print(torch.stack(results).shape)
 
     return results, targets
-def print_output():
-    sys.stdout = TextRedirector(App.Text, 'stdout')
+
 # Create a window and pass it to the Application object
 def main():
     App(tkinter.Tk(), "Tkinter and OpenCV")
