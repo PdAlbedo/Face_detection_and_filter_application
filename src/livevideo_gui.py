@@ -88,11 +88,11 @@ class App:
         self.Text.pack(anchor=tkinter.CENTER)
         self.Text.tag_configure('stderr', foreground='#b22222')
         # Create a canvas that can fit the above video source size
-        self.canvas = tkinter.Canvas(window, width=1600, height=1000)
+        self.canvas = tkinter.Canvas(window, width=1800, height=1000)
         self.canvas.pack()
 
         # After it is called once, the update method will be automatically called every delay milliseconds
-        self.delay = 15
+        self.delay = 1
         self.update()
 
         self.window.mainloop()
@@ -150,7 +150,7 @@ class App:
         cele_faces_loader = DataLoader(dataset=cele_faces,
                                        batch_size=100,
                                        shuffle=False,
-                                       num_workers=4)
+                                       num_workers=0)
 
 
         results, targets = build_embedding_space(network, cele_faces_loader)
@@ -160,7 +160,7 @@ class App:
                 rows=row.cpu().detach().numpy().tolist()
                 writer.writerow(rows)
         with open('../csv/targets.csv',"w",newline='') as f:
-            writer = csv.writer(f,delimiter=' ')
+            writer = csv.writer(f)
             # for row in targets:
             #     print(row)
             writer.writerows(targets)
@@ -175,7 +175,7 @@ class App:
             # data = list(data)
             data = np.array(data)
             data = data.astype(float)
-            data = torch.Tensor(data)
+            # data = torch.Tensor(data)
             for line in data:
                 # arr_2d = np.reshape(line, (28, 28))
                 # tensor = torch.Tensor(line)
@@ -186,8 +186,9 @@ class App:
             reader = csv.reader(f)
             # label = list(reader)
             for row in reader:
-                targets.append(row)
-            targets=str(targets)
+                str = ''.join(row)
+                targets.append(str)
+        print(targets)
 
         network = model_build.MyNetwork()
         network.eval()
@@ -206,8 +207,9 @@ class App:
         # print(type(results_t[0].detach().numpy()))
         # print(type(results[0].detach().numpy()))
         print(nn(results, targets, results_t[0]))
-        # img = cv2.imread(nn(results, targets, results_t[0]))
-        # cv2.imshow('tmp', img)
+        img = cv2.imread(nn(results, targets, results_t[0]))
+        cv2.imshow('tmp', img)
+
 
 class TextRedirector(object):
     def __init__(self, widget, tag='stdout'):
@@ -539,17 +541,16 @@ def ssd(a, b):
 
 
 def nn(results, targets, a):
-    t = time.time()
+    a=a.cpu().detach().numpy()
+    targets=np.array(targets)
     min_dis = float('inf')
-    file_name = None
+    file_name = []
     for i in range(len(results)):
-        d = ssd(a.detach().numpy(), results[i].detach().numpy())
-        print("%.2f" % d, end = " ")
+        d = ssd(a, results[i])
+        # print("%.2f" % d, end = " ")
         if d < min_dis:
             min_dis = d
             file_name = targets[i]
-    c = time.time()
-    print('\n', c - t)
     return file_name
 
 
