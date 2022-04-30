@@ -188,7 +188,6 @@ class App:
             for row in reader:
                 str = ''.join(row)
                 targets.append(str)
-        print(targets)
 
         network = model_build.MyNetwork()
         network.eval()
@@ -206,7 +205,6 @@ class App:
 
         # print(type(results_t[0].detach().numpy()))
         # print(type(results[0].detach().numpy()))
-        print(nn(results, targets, results_t[0]))
         img = cv2.imread(nn(results, targets, results_t[0]))
         cv2.imshow('tmp', img)
 
