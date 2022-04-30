@@ -100,7 +100,7 @@ class App:
     def snapshot(self):
         ret, frame = self.vid.get_frame()
         if ret:
-            cv2.imwrite("../"+"matching/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            cv2.imwrite("../"+"data/test/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
     def setmode(self, number):
         self.mode = number
 
@@ -138,9 +138,8 @@ class App:
         return
 
     def get_traintocsv(self):
-        print('start Matching')
+        print('start Training')
         model_build.generate_csv('image', 'image_info.csv')
-        model_build.generate_csv('test', 'test_info.csv')
 
         network = model_build.MyNetwork()
         network.eval()
@@ -167,6 +166,7 @@ class App:
 
     def getmatching_image(self):
         print('start Matching')
+        model_build.generate_csv('test', 'test_info.csv')
         targets = []
         results = []
         with open('../csv/results.csv', "r", newline='') as f:
