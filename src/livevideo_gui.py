@@ -1,6 +1,5 @@
 import tkinter
 import PIL.Image, PIL.ImageTk
-import time
 from functools import partial
 import dlib
 import imutils
@@ -10,10 +9,8 @@ from torch.utils.data import DataLoader
 import model_build
 import cv2
 import torch
-import multiprocessing
 import sys
 import csv
-import time
 
 DETECTOR = dlib.get_frontal_face_detector()
 PREDICTOR = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
@@ -53,46 +50,46 @@ class App:
         self.video_source = video_source
 
         # Button
-        self.button0 = tkinter.Button(window, text="gray", width=50, command=partial(self.setmode, 0))
-        self.button0.pack(anchor=tkinter.CENTER, side="bottom")
+        self.button0 = tkinter.Button(window, text="Grayscale", width=50, command=partial(self.setmode, 0))
+        self.button0.pack(anchor=tkinter.E, side="bottom")
 
-        self.btn_detect = tkinter.Button(window, text="face_detect", width=50, command=partial(self.setmode, 1))
-        self.btn_detect.pack(anchor=tkinter.CENTER, side="bottom")
+        self.btn_detect = tkinter.Button(window, text="Face Detect", width=50, command=partial(self.setmode, 1))
+        self.btn_detect.pack(anchor=tkinter.E, side="bottom")
 
-        self.btn_exchange = tkinter.Button(window, text="exchangeface", width=50, command=partial(self.setmode, 2))
-        self.btn_exchange.pack(anchor=tkinter.CENTER, side="bottom")
+        self.btn_exchange = tkinter.Button(window, text="Face Swap", width=50, command=partial(self.setmode, 2))
+        self.btn_exchange.pack(anchor=tkinter.E, side="bottom")
 
-        self.btn_filter = tkinter.Button(window, text="filter", width=50, command=partial(self.setmode_filter, 3))
-        self.btn_filter.pack(anchor=tkinter.CENTER, side="bottom")
+        self.btn_filter = tkinter.Button(window, text="Face Modifications", width=50, command=partial(self.setmode_filter, 3))
+        self.btn_filter.pack(anchor=tkinter.E, side="bottom")
 
 
         self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
-        self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)
+        self.btn_snapshot.pack(anchor=tkinter.E, expand=True)
 
-        self.btn_savecsv= tkinter.Button(window, text="Train_dataset", width=50, command=self.get_traintocsv)
-        self.btn_savecsv.pack(anchor=tkinter.CENTER, expand=True)
+        self.btn_savecsv= tkinter.Button(window, text="Create embedding space to database", width=50, command=self.get_traintocsv)
+        self.btn_savecsv.pack(anchor=tkinter.E, expand=True)
 
         self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=self.getmatching_image)
-        self.btn_matching.pack(anchor=tkinter.CENTER, expand=True)
+        self.btn_matching.pack(anchor=tkinter.E, expand=True)
 
 
-        #check button
+        #check button for Face Swap
         self.list_itmes = tkinter.StringVar()
         self.list_itmes.set(('glass', 'clown'))
         self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes, width=5, height=5)
-        self.filterchoose.pack(anchor=tkinter.CENTER, side="bottom")
+        self.filterchoose.pack(anchor=tkinter.E, side="bottom")
 
         self.vid = MyVideoCapture(self.video_source)
         # text
         self.Text = tkinter.Text(window, wrap='word', width=100, height=5)
-        self.Text.pack(anchor=tkinter.CENTER)
+        self.Text.pack(anchor=tkinter.SW, side="bottom")
         self.Text.tag_configure('stderr', foreground='#b22222')
         # Create a canvas that can fit the above video source size
-        self.canvas = tkinter.Canvas(window, width=1600, height=1000)
+        self.canvas = tkinter.Canvas(window, width=1800, height=1000)
         self.canvas.pack()
 
         # After it is called once, the update method will be automatically called every delay milliseconds
-        self.delay = 15
+        self.delay = 1
         self.update()
 
         self.window.mainloop()
@@ -100,7 +97,7 @@ class App:
     def snapshot(self):
         ret, frame = self.vid.get_frame()
         if ret:
-            cv2.imwrite("../"+"matching/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            cv2.imwrite("../"+"data/test/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
     def setmode(self, number):
         self.mode = number
 
@@ -122,25 +119,20 @@ class App:
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
         ret, output = self.vid.get_output(self.mode)
+        # update stream video show on the image
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
             self.photo_output = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(output))
-            self.canvas.create_image(900, 0, image=self.photo_output, anchor=tkinter.NW)
+            self.canvas.create_image(450, 0, image=self.photo_output, anchor=tkinter.NW)
         self.window.after(self.delay, self.update)
         sys.stdout = TextRedirector(self.Text, 'stdout')
         sys.stderr = TextRedirector(self.Text, 'stderr')
 
-
-    def multiprocess(self):
-        p1 = multiprocessing.Process(target=self.getmatching_image)
-        p1.start()
-        return
-
+    # Create a embedding space database for celebrity image datasets
     def get_traintocsv(self):
-        print('start Matching')
+        print('start Training')
         model_build.generate_csv('image', 'image_info.csv')
-        model_build.generate_csv('test', 'test_info.csv')
 
         network = model_build.MyNetwork()
         network.eval()
@@ -150,7 +142,7 @@ class App:
         cele_faces_loader = DataLoader(dataset=cele_faces,
                                        batch_size=100,
                                        shuffle=False,
-                                       num_workers=4)
+                                       num_workers=0)
 
 
         results, targets = build_embedding_space(network, cele_faces_loader)
@@ -160,58 +152,51 @@ class App:
                 rows=row.cpu().detach().numpy().tolist()
                 writer.writerow(rows)
         with open('../csv/targets.csv',"w",newline='') as f:
-            writer = csv.writer(f,delimiter=' ')
-            # for row in targets:
-            #     print(row)
+            writer = csv.writer(f)
             writer.writerows(targets)
 
+    # matching image for current videostream faces
     def getmatching_image(self):
+        # snapshot for current videostream
+        self.snapshot()
+        print('snapshot finished')
         print('start Matching')
+        model_build.generate_csv('test', 'test_info.csv')
         targets = []
         results = []
+        # read embedding space results from database
         with open('../csv/results.csv', "r", newline='') as f:
             reader = csv.reader(f)
             data = list(reader)
-            # data = list(data)
             data = np.array(data)
             data = data.astype(float)
-            # data = torch.Tensor(data)
             for line in data:
-                # arr_2d = np.reshape(line, (28, 28))
-                # tensor = torch.Tensor(line)
                 results.append(line)
 
-        # read label
+        # read image labels from database
         with open('../csv/targets.csv', "r", newline='') as f:
             reader = csv.reader(f)
-            # label = list(reader)
             for row in reader:
-                targets.append(row)
-            targets=str(targets)
+                str = ''.join(row)
+                targets.append(str)
 
         network = model_build.MyNetwork()
         network.eval()
 
-
+        # load saved current image
         test_face = model_build.CustomizedDataset(annotations_file='../data/test_info.csv',
                                                   img_dir='../data/test')
         test_face_loader = DataLoader(dataset=test_face,
                                       batch_size=1,
-                                      shuffle=False,
-                                      num_workers=4)
-
-        # results, targets = build_embedding_space(network, cele_faces_loader)
+                                      shuffle=False)
+        # create embedding space for current image
         results_t, targets_t = build_embedding_space(network, test_face_loader)
 
-        print(results)
 
+        img = cv2.imread(nn(results, targets, results_t[0]))
+        cv2.imshow('tmp', img)
 
-        # print(type(results_t[0].detach().numpy()))
-        # print(type(results[0].detach().numpy()))
-        print(nn(results, targets, results_t[0]))
-        # img = cv2.imread(nn(results, targets, results_t[0]))
-        # cv2.imshow('tmp', img)
-
+# Class using to capture print to GUI text area
 class TextRedirector(object):
     def __init__(self, widget, tag='stdout'):
         self.widget = widget
@@ -223,7 +208,9 @@ class TextRedirector(object):
         self.widget.see(tkinter.END)
         self.widget.configure(state='disabled')
 
+# Class using opencv to capture stream video from camera and resize
 class MyVideoCapture:
+    # initialize
     def __init__(self, video_source=0):
         # Open the video source
         self.vid = cv2.VideoCapture(video_source)
@@ -233,12 +220,12 @@ class MyVideoCapture:
         # Get video source width and height
         self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        # self.mode = 0
 
+    # get frame from stream video
     def get_frame(self):
         if self.vid.isOpened():
             ret, frame = self.vid.read()
-            frame = cv2.resize(frame, (800, 600))
+            frame = cv2.resize(frame, (400, 300))
             if ret:
                 # Return a boolean success flag and the current frame converted to BGR
                 return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
@@ -246,11 +233,11 @@ class MyVideoCapture:
                 return (ret, None)
         else:
             return (ret, None)
-
+    # output interface with GUI
     def get_output(self, mode):
         if self.vid.isOpened():
             ret, frame = self.vid.read()
-            frame = cv2.resize(frame, (800, 600))
+            frame = cv2.resize(frame, (400, 300))
             if mode == 0:
                 output = get_gray(frame)
             elif mode == 1:
@@ -261,8 +248,6 @@ class MyVideoCapture:
             elif mode == 3:
                 output_0, faces = get_facedetect(frame)
                 output = get_filtered(frame, faces)
-            # elif mode == 4:
-            #     output = frame
             else:
                 output = frame
             if ret:
@@ -277,13 +262,13 @@ class MyVideoCapture:
         if self.vid.isOpened():
             self.vid.release()
 
-
+# Grayscale function
 def get_gray(input):
     print('start grayscale')
     output = cv2.cvtColor(input, cv2.COLOR_BGR2GRAY)
     return output
 
-
+# Facedetect function
 def get_facedetect(input):
     print('start face detect')
     output = input
@@ -308,7 +293,7 @@ def get_facedetect(input):
                 cv2.circle(img=output, center=(x, y), radius=1, color=(0, 255, 0), thickness=-1)
     return output, faces
 
-
+# Face Swap function
 def get_exchangeface(input, faces):
     output = input
     if len(faces) < 2:
@@ -346,7 +331,7 @@ def get_exchangeface(input, faces):
         output = output_im.astype(np.uint8)
     return output
 
-
+# Face Modifications function
 def get_filtered(input, faces):
     print('start filter')
     output = input
@@ -396,7 +381,6 @@ def get_filtered(input, faces):
                         for j in range(y_offset, y_offset + rows):
                             if (i > 0 and i < input.shape[1] and j > 0 and j < input.shape[0]
                                     and glasses[j - y_offset][i - x_offset][3] != 0):
-                                # print(i, j)
                                 output[j][i][0] = glasses[j - y_offset][i - x_offset][0]
                                 output[j][i][1] = glasses[j - y_offset][i - x_offset][1]
                                 output[j][i][2] = glasses[j - y_offset][i - x_offset][2]
@@ -419,7 +403,6 @@ def get_filtered(input, faces):
 
                     d = abs(x1 - x2)
                     rows, cols = glasses.shape[0], glasses.shape[1]
-                    # print(rows, cols) 266 399
 
                     l = abs(y1 - y2)
 
@@ -454,11 +437,12 @@ def get_filtered(input, faces):
                                 output[j][i][2] = glasses[j - y_offset][i - x_offset][2]
     return output
 
-
+# draw face area
 def draw_convex_hull(im, points, color):
     points = cv2.convexHull(points)
     cv2.fillConvexPoly(im, points, color=color)
 
+# correct colours for two detected faces
 def correct_colours(im1, im2, landmarks1):
     blur_amount = COLOUR_CORRECT_BLUR_FRAC * np.linalg.norm(
                               np.mean(landmarks1[LEFT_EYE_POINTS], axis=0) -
@@ -474,7 +458,7 @@ def correct_colours(im1, im2, landmarks1):
 
     return (im2.astype(np.float64) * im1_blur.astype(np.float64) /
                                                 im2_blur.astype(np.float64))
-
+# warp two faces
 def warp_im(im, M, dshape):
     output_im = np.zeros(dshape, dtype=im.dtype)
     cv2.warpAffine(im,
@@ -485,6 +469,7 @@ def warp_im(im, M, dshape):
                    flags=cv2.WARP_INVERSE_MAP)
     return output_im
 
+# get face mask area
 def get_face_mask(im, landmarks):
     im = np.zeros(im.shape[:2], dtype=np.float64)
 
@@ -536,28 +521,25 @@ def transformation_from_points(points1, points2):
                                        c2.T - (s2 / s1) * R * c1.T)),
                          np.matrix([0., 0., 1.])])
 
+# calculate ssd
 def ssd(a, b):
     d = np.sum((a - b) ** 2)
     return d
 
-
+# matching to minimize ssd distance image
 def nn(results, targets, a):
-    print(type(results))
-    print(len(results))
-    t = time.time()
+    a=a.cpu().detach().numpy()
+    targets=np.array(targets)
     min_dis = float('inf')
-    file_name = None
+    file_name = []
     for i in range(len(results)):
-        d = ssd(a.detach().numpy(), results[i])
-        print("%.2f" % d, end = " ")
+        d = ssd(a, results[i])
         if d < min_dis:
             min_dis = d
             file_name = targets[i]
-    c = time.time()
-    print('\n', c - t)
     return file_name
 
-
+# built embedding space
 def build_embedding_space(model, dataloader):
     model.eval()
     results = []
@@ -565,18 +547,18 @@ def build_embedding_space(model, dataloader):
     b = 0
     for data, target in dataloader:
         output = model(data)
-        # print("\nBatch %d:" % b)
-        # print("Input batch size: ", end = "")
-        # print(data.shape)
-        # print("Apply the model with 50-node dense layer to the data, "
-        #       "we have the returned output with the shape of: ", end = "")
-        # print(output.shape)
+        print("\nBatch %d:" % b)
+        print("Input batch size: ", end = "")
+        print(data.shape)
+        print("Apply the model with 50-node dense layer to the data, "
+              "we have the returned output with the shape of: ", end = "")
+        print(output.shape)
         b += 1
 
         for i in range(len(output)):
             results.append(output[i])
             targets.append(target[i])
-    # print("\nShape of the output nodes from the model: ", end = "")
+    print("\nShape of the output nodes from the model: ", end = "")
     print(torch.stack(results).shape)
 
     return results, targets
