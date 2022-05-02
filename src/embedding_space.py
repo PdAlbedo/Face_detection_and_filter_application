@@ -3,6 +3,7 @@ Project the images into embedding space
 """
 import cv2
 import torch
+import time
 import numpy as np
 from torch.utils.data import DataLoader
 import model_build
