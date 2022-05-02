@@ -11,6 +11,7 @@ import cv2
 import torch
 import sys
 import csv
+import time
 
 DETECTOR = dlib.get_frontal_face_detector()
 PREDICTOR = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
@@ -49,49 +50,49 @@ class App:
         self.window.title(window_title)
         self.video_source = video_source
 
+
         # Button
-        self.button0 = tkinter.Button(window, text="Grayscale", width=50, command=partial(self.setmode, 0))
-        self.button0.pack(anchor=tkinter.E, side="bottom")
-
-        self.btn_detect = tkinter.Button(window, text="Face Detect", width=50, command=partial(self.setmode, 1))
-        self.btn_detect.pack(anchor=tkinter.E, side="bottom")
-
-        self.btn_exchange = tkinter.Button(window, text="Face Swap", width=50, command=partial(self.setmode, 2))
-        self.btn_exchange.pack(anchor=tkinter.E, side="bottom")
-
-        self.btn_filter = tkinter.Button(window, text="Face Modifications", width=50, command=partial(self.setmode_filter, 3))
-        self.btn_filter.pack(anchor=tkinter.E, side="bottom")
-
-
-        self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
-        self.btn_snapshot.pack(anchor=tkinter.E, expand=True)
-
-        self.btn_savecsv= tkinter.Button(window, text="Create embedding space to database", width=50, command=self.get_traintocsv)
-        self.btn_savecsv.pack(anchor=tkinter.E, expand=True)
 
         self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=self.getmatching_image)
-        self.btn_matching.pack(anchor=tkinter.E, expand=True)
+        self.btn_matching.pack(anchor=tkinter.N, side="bottom", expand=True)
 
+        self.btn_savecsv= tkinter.Button(window, text="Create embedding space to database", width=50, command=self.get_traintocsv)
+        self.btn_savecsv.pack(anchor=tkinter.N, side="bottom", expand=True)
 
         #check button for Face Swap
         self.list_itmes = tkinter.StringVar()
         self.list_itmes.set(('glass', 'clown'))
-        self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes, width=5, height=5)
-        self.filterchoose.pack(anchor=tkinter.E, side="bottom")
+        self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes, width=30, height=3, justify="center")
+        self.filterchoose.pack(side="bottom")
+
+        self.btn_filter = tkinter.Button(window, text="Face Modifications", width=50, command=partial(self.setmode_filter, 3))
+        self.btn_filter.pack(anchor=tkinter.N, side="bottom")
+
+        self.btn_exchange = tkinter.Button(window, text="Face Swap", width=50, command=partial(self.setmode, 2))
+        self.btn_exchange.pack(anchor=tkinter.N, side="bottom")
+
+        self.btn_detect = tkinter.Button(window, text="Face Detect", width=50, command=partial(self.setmode, 1))
+        self.btn_detect.pack(anchor=tkinter.N, side="bottom")
+
+        self.button0 = tkinter.Button(window, text="Grayscale", width=50, command=partial(self.setmode, 0))
+        self.button0.pack(anchor=tkinter.N, side="bottom")
+
+        self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
+        self.btn_snapshot.pack(anchor=tkinter.N, side="bottom", expand=True)
 
         self.vid = MyVideoCapture(self.video_source)
         # text
-        self.Text = tkinter.Text(window, wrap='word', width=100, height=5)
-        self.Text.pack(anchor=tkinter.SW, side="bottom")
+        self.Text = tkinter.Text(window, wrap='word', width=120, height=5)
+        self.Text.pack(fill="both", anchor=tkinter.SW, side="bottom")
         self.Text.tag_configure('stderr', foreground='#b22222')
         # Create a canvas that can fit the above video source size
-        self.canvas = tkinter.Canvas(window, width=1800, height=1000)
+        self.canvas = tkinter.Canvas(window, width=950, height=300)
+
         self.canvas.pack()
 
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.delay = 1
         self.update()
-
         self.window.mainloop()
 
     def snapshot(self):
@@ -122,9 +123,9 @@ class App:
         # update stream video show on the image
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
-            self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
+            self.canvas.create_image(50, 0, image=self.photo, anchor=tkinter.NW)
             self.photo_output = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(output))
-            self.canvas.create_image(450, 0, image=self.photo_output, anchor=tkinter.NW)
+            self.canvas.create_image(500, 0, image=self.photo_output, anchor=tkinter.NW)
         self.window.after(self.delay, self.update)
         sys.stdout = TextRedirector(self.Text, 'stdout')
         sys.stderr = TextRedirector(self.Text, 'stderr')
@@ -565,7 +566,7 @@ def build_embedding_space(model, dataloader):
 
 # Create a window and pass it to the Application object
 def main():
-    App(tkinter.Tk(), "Tkinter and OpenCV")
+    App(tkinter.Tk(), "Face Detection and its Applications")
 
 
 
