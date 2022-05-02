@@ -197,8 +197,7 @@ class App:
                                                   img_dir='../data/test')
         test_face_loader = DataLoader(dataset=test_face,
                                       batch_size=1,
-                                      shuffle=False,
-                                      num_workers=4)
+                                      shuffle=False)
 
         # results, targets = build_embedding_space(network, cele_faces_loader)
         results_t, targets_t = build_embedding_space(network, test_face_loader)
