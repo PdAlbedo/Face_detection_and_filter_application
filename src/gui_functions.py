@@ -63,6 +63,25 @@ def get_facedetect(input_):
             cv2.circle(img = output, center = (x, y), radius = 1, color = (0, 255, 0), thickness = -1)
     return output, faces
 
+# Facedetect function
+def get_facedetect_nodraw(input_):
+    print('start face detect')
+    output = input_
+    gray = cv2.cvtColor(src = input_, code = cv2.COLOR_BGR2GRAY)
+    # Use detector to find landmarks
+    faces = DETECTOR(gray)
+
+    for face in faces:
+        # Create landmark object
+        landmarks = PREDICTOR(image = gray, box = face)
+
+        # Loop through all the points
+        for n in range(0, 68):
+            x = landmarks.part(n).x
+            y = landmarks.part(n).y
+            # Draw a circle
+            # cv2.circle(img = output, center = (x, y), radius = 1, color = (0, 255, 0), thickness = -1)
+    return output, faces
 
 # Face Swap function
 def get_exchange_face(input_, faces):

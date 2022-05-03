@@ -19,7 +19,8 @@ import gui_functions
 import processing_functions
 
 torch.manual_seed(888)
-
+global if_glass
+global if_clown
 if_glass = False
 if_clown = False
 
@@ -230,10 +231,10 @@ class MyVideoCapture:
             elif mode == 1:
                 output, faces = gui_functions.get_facedetect(frame)
             elif mode == 2:
-                output_0, faces = gui_functions.get_facedetect(frame)
+                output_0, faces = gui_functions.get_facedetect_nodraw(frame)
                 output = gui_functions.get_exchange_face(frame, faces)
             elif mode == 3:
-                output_0, faces = gui_functions.get_facedetect(frame)
+                output_0, faces = gui_functions.get_facedetect_nodraw(frame)
                 output = gui_functions.get_filtered(frame, faces)
             else:
                 output = frame
