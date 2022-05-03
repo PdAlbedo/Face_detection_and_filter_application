@@ -535,10 +535,6 @@ def transformation_from_points(points1, points2):
 
     U, S, Vt = np.linalg.svd(points1.T * points2)
 
-    # The R we seek is in fact the transpose of the one given by U * Vt. This
-    # is because the above formulation assumes the matrix goes on the right
-    # (with row vectors) whereas our solution requires the matrix to be on the
-    # left (with column vectors).
     R = (U * Vt).T
 
     return np.vstack([np.hstack(((s2 / s1) * R,
