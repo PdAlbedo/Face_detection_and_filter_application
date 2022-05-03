@@ -1,20 +1,26 @@
 """
-Structure of the model
+Structure of the model/ classes
 """
+__author__ = "Sida Zhang, Charles Wan, Xiang Wang, Xichen Liu"
 
 import os
 import csv
 import cv2
-import numpy as np
+import torch
 import pandas as pd
 import torch.nn as nn
-from pathlib import Path
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchvision.io import read_image
 
+torch.manual_seed(888)
+
 
 class MyNetwork(nn.Module):
+    """
+    Build CNN
+    """
+
     def __init__(self, conv_filter = 5, dropout_rate = 0.5):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, (conv_filter, conv_filter))
@@ -46,6 +52,10 @@ class MyNetwork(nn.Module):
 
 
 class CustomizedDataset(Dataset):
+    """
+    Generate a dataset
+    """
+
     def __init__(self, annotations_file, img_dir, transform = None, target_transform = None):
         self.img_labels = pd.read_csv(annotations_file)
         self.img_dir = img_dir
@@ -67,6 +77,13 @@ class CustomizedDataset(Dataset):
 
 
 def generate_csv(img_dir, csv_name):
+    """
+    Generate the csv file form a given image directory
+
+    :param img_dir:     image directory
+    :param csv_name:    name of csv file
+    :return
+    """
     dir_path = '../data/' + img_dir
     csv_path = '../data/' + csv_name
     with open(csv_path, 'w', encoding = 'UTF8', newline = '') as f:
