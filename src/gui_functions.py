@@ -63,7 +63,7 @@ def get_facedetect(input_):
             cv2.circle(img = output, center = (x, y), radius = 1, color = (0, 255, 0), thickness = -1)
     return output, faces
 
-# Facedetect function
+# Face detect function with no draw circle
 def get_facedetect_nodraw(input_):
     print('start face detect')
     output = input_
@@ -79,8 +79,6 @@ def get_facedetect_nodraw(input_):
         for n in range(0, 68):
             x = landmarks.part(n).x
             y = landmarks.part(n).y
-            # Draw a circle
-            # cv2.circle(img = output, center = (x, y), radius = 1, color = (0, 255, 0), thickness = -1)
     return output, faces
 
 # Face Swap function
