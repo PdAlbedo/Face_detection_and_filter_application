@@ -10,6 +10,7 @@ import torch
 import imutils
 import numpy as np
 import processing_functions
+import gui_class
 
 torch.manual_seed(888)
 
@@ -33,9 +34,6 @@ PREDICTOR = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat"
 # Points used to line up the images.
 ALIGN_POINTS = (LEFT_BROW_POINTS + RIGHT_EYE_POINTS + LEFT_EYE_POINTS +
                 RIGHT_BROW_POINTS + NOSE_POINTS + MOUTH_POINTS)
-
-if_glass = False
-if_clown = False
 
 
 # Grayscale function
@@ -77,10 +75,10 @@ def get_exchange_face(input_, faces):
         landmarks2 = np.matrix([[p.x, p.y] for p in PREDICTOR(input_, faces[1]).parts()])
 
         M1 = processing_functions.transformation_from_points(landmarks1[ALIGN_POINTS],
-                                        landmarks2[ALIGN_POINTS])
+                                                             landmarks2[ALIGN_POINTS])
 
         M2 = processing_functions.transformation_from_points(landmarks2[ALIGN_POINTS],
-                                        landmarks1[ALIGN_POINTS])
+                                                             landmarks1[ALIGN_POINTS])
 
         mask1 = processing_functions.get_face_mask(input_, landmarks2)
         mask2 = processing_functions.get_face_mask(input_, landmarks1)
@@ -109,7 +107,7 @@ def get_filtered(input_, faces):
     print('start filter')
     output = input_
     gray = cv2.cvtColor(src = input_, code = cv2.COLOR_BGR2GRAY)
-    if if_glass:
+    if gui_class.if_glass:
         if len(faces) == 0:
             print("There is no face detected!")
         else:
@@ -152,11 +150,12 @@ def get_filtered(input_, faces):
 
                     for i in range(x_offset, x_offset + cols):
                         for j in range(y_offset, y_offset + rows):
-                            if i > 0 and i < input_.shape[1] and j > 0 and j < input_.shape[0] and glasses[j - y_offset][i - x_offset][3] != 0:
+                            if i > 0 and i < input_.shape[1] and j > 0 and j < input_.shape[0] and \
+                                    glasses[j - y_offset][i - x_offset][3] != 0:
                                 output[j][i][0] = glasses[j - y_offset][i - x_offset][0]
                                 output[j][i][1] = glasses[j - y_offset][i - x_offset][1]
                                 output[j][i][2] = glasses[j - y_offset][i - x_offset][2]
-    elif if_clown:
+    elif gui_class.if_clown:
         if len(faces) == 0:
             print("There is no face detected!")
         else:
@@ -201,7 +200,8 @@ def get_filtered(input_, faces):
 
                     for i in range(x_offset, x_offset + cols):
                         for j in range(y_offset, y_offset + rows):
-                            if i > 0 and i < input_.shape[1] and j > 0 and j < input_.shape[0] and glasses[j - y_offset][i - x_offset][3] != 0:
+                            if i > 0 and i < input_.shape[1] and j > 0 and j < input_.shape[0] and \
+                                    glasses[j - y_offset][i - x_offset][3] != 0:
                                 # print(i, j)
                                 output[j][i][0] = glasses[j - y_offset][i - x_offset][0]
                                 output[j][i][1] = glasses[j - y_offset][i - x_offset][1]

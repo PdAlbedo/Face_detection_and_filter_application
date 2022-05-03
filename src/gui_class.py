@@ -20,6 +20,8 @@ import processing_functions
 
 torch.manual_seed(888)
 
+if_glass = False
+if_clown = False
 
 class App:
     def __init__(self, window, window_title, video_source = 0):
