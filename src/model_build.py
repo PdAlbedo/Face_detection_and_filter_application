@@ -1,7 +1,12 @@
 """
-Structure of the model
+    CS5330 - Computer Vision - Bruce Maxwell
+    Final Project: Face Detection and its Applications
+    Names: Sida Zhang & Hongyu Wan & Xichen Liu & Xiang Wang
+
+    Description:
 """
 
+#  import statements
 import os
 import csv
 import cv2
