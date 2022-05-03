@@ -1,0 +1,39 @@
+Index: src/livevideo_gui.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import tkinter\r\nimport cv2\r\nimport PIL.Image, PIL.ImageTk\r\nimport time\r\nfrom functools import partial\r\nimport dlib\r\nclass App:\r\n    def __init__(self, window, window_title, video_source=0):\r\n        self.mode = 10\r\n        self.window = window\r\n        self.window.title(window_title)\r\n        self.video_source = video_source\r\n\r\n        #Button\r\n        self.button0 = tkinter.Button(window, text =\"gray\",width = 50, command =partial(self.setmode, 0))\r\n        self.button0.pack(anchor=tkinter.CENTER)\r\n\r\n        self.btn_detect = tkinter.Button(window, text =\"face_detect\",width = 50, command = partial(self.setmode, 1))\r\n        self.btn_detect.pack(anchor=tkinter.CENTER)\r\n\r\n        self.btn_exchange = tkinter.Button(window, text =\"exchangeface\",width = 50, command = partial(self.setmode, 2))\r\n        self.btn_exchange.pack(anchor=tkinter.CENTER)\r\n\r\n        self.btn_filter = tkinter.Button(window, text =\"filter\",width = 50, command = partial(self.setmode, 3))\r\n        self.btn_filter.pack(anchor=tkinter.CENTER)\r\n         # open video source (by default this will try to open the computer webcam)\r\n        self.vid = MyVideoCapture(self.video_source)\r\n\r\n        # Create a canvas that can fit the above video source size\r\n        self.canvas = tkinter.Canvas(window, width = 1000, height = 600)\r\n        self.canvas.pack()\r\n\r\n        # Button that lets the user take a snapshot\r\n        self.btn_snapshot=tkinter.Button(window, text=\"Snapshot\", width=50, command=self.snapshot)\r\n        self.btn_snapshot.pack(anchor=tkinter.CENTER, expand=True)\r\n\r\n        # After it is called once, the update method will be automatically called every delay milliseconds\r\n        self.delay = 5\r\n        self.update()\r\n\r\n        self.window.mainloop()\r\n\r\n    def snapshot(self):\r\n        # Get a frame from the video source\r\n        ret, frame = self.vid.get_frame()\r\n\r\n        if ret:\r\n            cv2.imwrite(\"frame-\" + time.strftime(\"%d-%m-%Y-%H-%M-%S\") + \".jpg\", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))\r\n\r\n    def setmode(self,number):\r\n        self.mode=number\r\n        print(self.mode)\r\n\r\n    def update(self):\r\n        # Get a frame from the video source\r\n        ret, frame= self.vid.get_frame()\r\n        ret, output = self.vid.get_output(self.mode)\r\n        if ret:\r\n            self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))\r\n            self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)\r\n            self.photo_output = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(output))\r\n            self.canvas.create_image(500, 0, image = self.photo_output, anchor = tkinter.NW)\r\n\r\n        self.window.after(self.delay, self.update)\r\n\r\n\r\nclass MyVideoCapture:\r\n    def __init__(self, video_source=0):\r\n       # Open the video source\r\n        self.vid = cv2.VideoCapture(video_source)\r\n        if not self.vid.isOpened():\r\n            raise ValueError(\"Unable to open video source\", video_source)\r\n\r\n        # Get video source width and height\r\n        self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)\r\n        self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)\r\n        # self.mode = 0\r\n\r\n    def get_frame(self):\r\n        if self.vid.isOpened():\r\n             ret, frame = self.vid.read()\r\n             frame =cv2.resize(frame, (400, 400))\r\n             if ret:\r\n                # Return a boolean success flag and the current frame converted to BGR\r\n                    return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))\r\n             else:\r\n                return (ret, None)\r\n        else:\r\n            return (ret, None)\r\n\r\n    def get_output(self, mode):\r\n        if self.vid.isOpened():\r\n            ret, frame = self.vid.read()\r\n            frame = cv2.resize(frame, (400, 400))\r\n            if mode == 0:\r\n                output = get_gray(frame)\r\n            elif mode == 1:\r\n                output = get_facedetect(frame)\r\n            elif mode == 2:\r\n                output = get_exchangeface(frame)\r\n            else:\r\n                output = frame\r\n            if ret:\r\n               # Return a boolean success flag and the current frame converted to BGR\r\n                return (ret, cv2.cvtColor(output, cv2.COLOR_BGR2RGB))\r\n            else:\r\n                return (ret, None)\r\n        else:\r\n            return (ret, None)\r\n\r\n    def __del__(self):\r\n        if self.vid.isOpened():\r\n            self.vid.release()\r\n\r\ndef get_gray(input):\r\n    output = cv2.cvtColor(input,cv2.COLOR_BGR2RGB)\r\n    return output\r\n\r\ndef get_facedetect(input):\r\n    detector = dlib.get_frontal_face_detector()\r\n    # Load the predictor\r\n    predictor = dlib.shape_predictor(\"../data/shape_predictor_68_face_landmarks.dat\")\r\n    output=input\r\n    gray = cv2.cvtColor(src=input, code=cv2.COLOR_BGR2GRAY)\r\n    # Use detector to find landmarks\r\n    faces = detector(gray)\r\n    for face in faces:\r\n        x1 = face.left()  # left point\r\n        y1 = face.top()  # top point\r\n        x2 = face.right()  # right point\r\n        y2 = face.bottom()  # bottom point\r\n        # Create landmark object\r\n        landmarks = predictor(image=gray, box=face)\r\n        # Loop through all the points\r\n        for n in range(0, 68):\r\n            x = landmarks.part(n).x\r\n            y = landmarks.part(n).y\r\n            # Draw a circle\r\n            cv2.circle(img=output, center=(x, y), radius=3, color=(0, 255, 0), thickness=-1)\r\n    return output\r\n\r\ndef get_exchangeface(input):\r\n    output =input\r\n    return output\r\n\r\ndef get_filtered(input):\r\n    output =input\r\n    return output\r\n# Create a window and pass it to the Application object\r\ndef main():\r\n    App(tkinter.Tk(), \"Tkinter and OpenCV\")\r\n\r\nif __name__ == '__main__':\r\n    main()
+===================================================================
+diff --git a/src/livevideo_gui.py b/src/livevideo_gui.py
+--- a/src/livevideo_gui.py	
++++ b/src/livevideo_gui.py	
+@@ -67,6 +67,9 @@
+ class MyVideoCapture:
+     def __init__(self, video_source=0):
+        # Open the video source
++        self.detector = dlib.get_frontal_face_detector()
++       # Load the predictor
++        self.predictor = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
+         self.vid = cv2.VideoCapture(video_source)
+         if not self.vid.isOpened():
+             raise ValueError("Unable to open video source", video_source)
+@@ -95,7 +98,7 @@
+             if mode == 0:
+                 output = get_gray(frame)
+             elif mode == 1:
+-                output = get_facedetect(frame)
++                output = get_facedetect(frame,self.detector, self.predictor)
+             elif mode == 2:
+                 output = get_exchangeface(frame)
+             else:
+@@ -116,10 +119,7 @@
+     output = cv2.cvtColor(input,cv2.COLOR_BGR2RGB)
+     return output
+ 
+-def get_facedetect(input):
+-    detector = dlib.get_frontal_face_detector()
+-    # Load the predictor
+-    predictor = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
++def get_facedetect(input,detector,predictor):
+     output=input
+     gray = cv2.cvtColor(src=input, code=cv2.COLOR_BGR2GRAY)
+     # Use detector to find landmarks
