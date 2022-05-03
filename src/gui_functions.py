@@ -1,7 +1,7 @@
 """
 Functions that implement the functionalities
 """
-__author__ = "Sida Zhang, Charles Wan, Xiang Wang, Xichen Liu"
+__author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
 import cv2
 import dlib

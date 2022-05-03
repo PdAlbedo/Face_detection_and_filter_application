@@ -1,7 +1,7 @@
 """
 Classes used in GUI
 """
-__author__ = "Sida Zhang, Charles Wan, Xiang Wang, Xichen Liu"
+__author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
 import csv
 import sys

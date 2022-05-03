@@ -1,7 +1,7 @@
 """
 Main function of application
 """
-__author__ = "Sida Zhang, Charles Wan, Xiang Wang, Xichen Liu"
+__author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
 import tkinter
 import gui_class
