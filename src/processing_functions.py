@@ -1,7 +1,7 @@
 """
 Basic functions used in intermediate level functions
 """
-__author__ = "Sida Zhang, Charles Wan, Xiang Wang, Xichen Liu"
+__author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
 import cv2
 import torch

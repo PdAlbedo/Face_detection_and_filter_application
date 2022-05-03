@@ -1,7 +1,7 @@
 """
 Structure of the model/ classes
 """
-__author__ = "Sida Zhang, Charles Wan, Xiang Wang, Xichen Liu"
+__author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
 import os
 import csv
