@@ -40,11 +40,12 @@ OVERLAY_POINTS = [
 
 # Points used to line up the images.
 ALIGN_POINTS = (LEFT_BROW_POINTS + RIGHT_EYE_POINTS + LEFT_EYE_POINTS +
-                               RIGHT_BROW_POINTS + NOSE_POINTS + MOUTH_POINTS)
+                RIGHT_BROW_POINTS + NOSE_POINTS + MOUTH_POINTS)
 
 if_glass = False
 if_clown = False
 torch.manual_seed(888)
+
 
 # GUI class
 class App:
@@ -59,7 +60,8 @@ class App:
         self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=self.getmatching_image)
         self.btn_matching.pack(anchor=tkinter.N, side="bottom", expand=True)
         # Button to save embedding space to database
-        self.btn_savecsv= tkinter.Button(window, text="Create embedding space to database", width=50, command=self.get_traintocsv)
+        self.btn_savecsv = tkinter.Button(window, text="Create embedding space to database", width=50,
+                                          command=self.get_traintocsv)
         self.btn_savecsv.pack(anchor=tkinter.N, side="bottom", expand=True)
         # Check button for Face modification object
         self.list_itmes = tkinter.StringVar()
@@ -67,7 +69,8 @@ class App:
         self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes, width=30, height=3, justify="center")
         self.filterchoose.pack(side="bottom")
         # Button to Face modification
-        self.btn_filter = tkinter.Button(window, text="Face Modifications", width=50, command=partial(self.setmode_filter, 3))
+        self.btn_filter = tkinter.Button(window, text="Face Modifications", width=50,
+                                         command=partial(self.setmode_filter, 3))
         self.btn_filter.pack(anchor=tkinter.N, side="bottom")
         # Button for Face Swap
         self.btn_exchange = tkinter.Button(window, text="Face Swap", width=50, command=partial(self.setmode, 2))
@@ -79,7 +82,7 @@ class App:
         self.button0 = tkinter.Button(window, text="Grayscale", width=50, command=partial(self.setmode, 0))
         self.button0.pack(anchor=tkinter.N, side="bottom")
         # Button to snapshot
-        self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
+        self.btn_snapshot = tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
         self.btn_snapshot.pack(anchor=tkinter.N, side="bottom", expand=True)
 
         self.vid = MyVideoCapture(self.video_source)
@@ -101,7 +104,9 @@ class App:
     def snapshot(self):
         ret, frame = self.vid.get_frame()
         if ret:
-            cv2.imwrite("../"+"data/test/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            cv2.imwrite("../" + "data/test/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg",
+                        cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+
     # Set gui running mode
     def setmode(self, number):
         self.mode = number
@@ -151,14 +156,13 @@ class App:
                                        shuffle=False,
                                        num_workers=0)
 
-
         results, targets = build_embedding_space(network, cele_faces_loader)
-        with open('../csv/results.csv',"w",newline='') as f:
+        with open('../csv/results.csv', "w", newline='') as f:
             writer = csv.writer(f)
             for row in results:
-                rows=row.cpu().detach().numpy().tolist()
+                rows = row.cpu().detach().numpy().tolist()
                 writer.writerow(rows)
-        with open('../csv/targets.csv',"w",newline='') as f:
+        with open('../csv/targets.csv', "w", newline='') as f:
             writer = csv.writer(f)
             writer.writerows(targets)
 
@@ -199,9 +203,9 @@ class App:
         # create embedding space for current image
         results_t, targets_t = build_embedding_space(network, test_face_loader)
 
-
         img = cv2.imread(nn(results, targets, results_t[0]))
         cv2.imshow('tmp', img)
+
 
 # Class using to capture print to GUI text area
 class TextRedirector(object):
@@ -211,9 +215,10 @@ class TextRedirector(object):
 
     def write(self, str):
         self.widget.configure(state='normal')
-        self.widget.insert(tkinter.END, str, (self.tag,))    # (self.tag,) 是设置配置
+        self.widget.insert(tkinter.END, str, (self.tag,))  # (self.tag,) 是设置配置
         self.widget.see(tkinter.END)
         self.widget.configure(state='disabled')
+
 
 # Class using opencv to capture stream video from camera and resize
 class MyVideoCapture:
@@ -240,6 +245,7 @@ class MyVideoCapture:
                 return (ret, None)
         else:
             return (ret, None)
+
     # output interface with GUI
     def get_output(self, mode):
         if self.vid.isOpened():
@@ -269,11 +275,13 @@ class MyVideoCapture:
         if self.vid.isOpened():
             self.vid.release()
 
+
 # Grayscale function
 def get_gray(input):
     print('start grayscale')
     output = cv2.cvtColor(input, cv2.COLOR_BGR2GRAY)
     return output
+
 
 # Facedetect function
 def get_facedetect(input):
@@ -300,6 +308,7 @@ def get_facedetect(input):
                 cv2.circle(img=output, center=(x, y), radius=1, color=(0, 255, 0), thickness=-1)
     return output, faces
 
+
 # Face Swap function
 def get_exchangeface(input, faces):
     output = input
@@ -321,22 +330,24 @@ def get_exchangeface(input, faces):
         warped_mask1 = warp_im(mask1, M1, input.shape)
         warped_mask2 = warp_im(mask2, M2, input.shape)
         combined_mask1 = np.max([get_face_mask(input, landmarks1), warped_mask1],
-                                   axis=0)
+                                axis=0)
         combined_mask2 = np.max([get_face_mask(input, landmarks2), warped_mask2],
-                                   axis=0)
+                                axis=0)
         warped_im1 = warp_im(input, M1, input.shape)
         warped_im2 = warp_im(input, M2, input.shape)
         warped_corrected_im1 = correct_colours(input, warped_im1, landmarks1)
         warped_corrected_im2 = correct_colours(input, warped_im2, landmarks2)
 
         output_im = input * (1.0 - combined_mask1) + warped_corrected_im1 * combined_mask1
-        # output_im = frame * (1.0  - combined_mask1)*(1.0- combined_mask2) + warped_corrected_im2 * combined_mask2 + warped_corrected_im1 * combined_mask1
+        # output_im = frame * (1.0  - combined_mask1)*(1.0- combined_mask2) + warped_corrected_im2 * combined_mask2 +
+        # warped_corrected_im1 * combined_mask1
         output_im = output_im * (1.0 - combined_mask2) + warped_corrected_im2 * combined_mask2
 
         cv2.imwrite('output.jpg', output_im)
 
         output = output_im.astype(np.uint8)
     return output
+
 
 # Face Modifications function
 def get_filtered(input, faces):
@@ -444,16 +455,18 @@ def get_filtered(input, faces):
                                 output[j][i][2] = glasses[j - y_offset][i - x_offset][2]
     return output
 
+
 # draw face area
 def draw_convex_hull(im, points, color):
     points = cv2.convexHull(points)
     cv2.fillConvexPoly(im, points, color=color)
 
+
 # correct colours for two detected faces
 def correct_colours(im1, im2, landmarks1):
     blur_amount = COLOUR_CORRECT_BLUR_FRAC * np.linalg.norm(
-                              np.mean(landmarks1[LEFT_EYE_POINTS], axis=0) -
-                              np.mean(landmarks1[RIGHT_EYE_POINTS], axis=0))
+        np.mean(landmarks1[LEFT_EYE_POINTS], axis=0) -
+        np.mean(landmarks1[RIGHT_EYE_POINTS], axis=0))
     blur_amount = int(blur_amount)
     if blur_amount % 2 == 0:
         blur_amount += 1
@@ -464,7 +477,9 @@ def correct_colours(im1, im2, landmarks1):
     im2_blur += (128 * (im2_blur <= 1.0)).astype(im2_blur.dtype)
 
     return (im2.astype(np.float64) * im1_blur.astype(np.float64) /
-                                                im2_blur.astype(np.float64))
+            im2_blur.astype(np.float64))
+
+
 # warp two faces
 def warp_im(im, M, dshape):
     output_im = np.zeros(dshape, dtype=im.dtype)
@@ -475,6 +490,7 @@ def warp_im(im, M, dshape):
                    borderMode=cv2.BORDER_TRANSPARENT,
                    flags=cv2.WARP_INVERSE_MAP)
     return output_im
+
 
 # get face mask area
 def get_face_mask(im, landmarks):
@@ -491,6 +507,7 @@ def get_face_mask(im, landmarks):
     im = cv2.GaussianBlur(im, (FEATHER_AMOUNT, FEATHER_AMOUNT), 0)
 
     return im
+
 
 def transformation_from_points(points1, points2):
     """
@@ -520,23 +537,25 @@ def transformation_from_points(points1, points2):
 
     # The R we seek is in fact the transpose of the one given by U * Vt. This
     # is because the above formulation assumes the matrix goes on the right
-    # (with row vectors) where as our solution requires the matrix to be on the
+    # (with row vectors) whereas our solution requires the matrix to be on the
     # left (with column vectors).
     R = (U * Vt).T
 
     return np.vstack([np.hstack(((s2 / s1) * R,
-                                       c2.T - (s2 / s1) * R * c1.T)),
-                         np.matrix([0., 0., 1.])])
+                                 c2.T - (s2 / s1) * R * c1.T)),
+                      np.matrix([0., 0., 1.])])
+
 
 # calculate ssd
 def ssd(a, b):
     d = np.sum((a - b) ** 2)
     return d
 
+
 # matching to minimize ssd distance image
 def nn(results, targets, a):
-    a=a.cpu().detach().numpy()
-    targets=np.array(targets)
+    a = a.cpu().detach().numpy()
+    targets = np.array(targets)
     min_dis = float('inf')
     file_name = []
     for i in range(len(results)):
@@ -545,6 +564,7 @@ def nn(results, targets, a):
             min_dis = d
             file_name = targets[i]
     return file_name
+
 
 # built embedding space
 def build_embedding_space(model, dataloader):
@@ -555,25 +575,25 @@ def build_embedding_space(model, dataloader):
     for data, target in dataloader:
         output = model(data)
         print("\nBatch %d:" % b)
-        print("Input batch size: ", end = "")
+        print("Input batch size: ", end="")
         print(data.shape)
         print("Apply the model with 50-node dense layer to the data, "
-              "we have the returned output with the shape of: ", end = "")
+              "we have the returned output with the shape of: ", end="")
         print(output.shape)
         b += 1
 
         for i in range(len(output)):
             results.append(output[i])
             targets.append(target[i])
-    print("\nShape of the output nodes from the model: ", end = "")
+    print("\nShape of the output nodes from the model: ", end="")
     print(torch.stack(results).shape)
 
     return results, targets
 
+
 # Create a window and pass it to the Application object
 def main():
     App(tkinter.Tk(), "Face Detection and its Applications")
-
 
 
 if __name__ == '__main__':
