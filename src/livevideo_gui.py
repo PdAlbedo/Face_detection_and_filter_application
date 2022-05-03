@@ -13,12 +13,15 @@ import sys
 import csv
 import time
 
+# import 68 face detection points file
 DETECTOR = dlib.get_frontal_face_detector()
 PREDICTOR = dlib.shape_predictor("../data/shape_predictor_68_face_landmarks.dat")
 
+# define SCALE_FACTOR and FEATHER_AMOUNT
 SCALE_FACTOR = 1
 FEATHER_AMOUNT = 11
 
+# define 68 face detection points
 FACE_POINTS = list(range(17, 68))
 MOUTH_POINTS = list(range(48, 61))
 RIGHT_BROW_POINTS = list(range(17, 22))
@@ -43,45 +46,44 @@ if_glass = False
 if_clown = False
 torch.manual_seed(888)
 
+# GUI class
 class App:
+    # GUI initial
     def __init__(self, window, window_title, video_source=0):
         self.mode = 10
         self.window = window
         self.window.title(window_title)
         self.video_source = video_source
-
-
-        # Button
-
+        # Button list
+        # Button to matching
         self.btn_matching = tkinter.Button(window, text="Matching", width=50, command=self.getmatching_image)
         self.btn_matching.pack(anchor=tkinter.N, side="bottom", expand=True)
-
+        # Button to save embedding space to database
         self.btn_savecsv= tkinter.Button(window, text="Create embedding space to database", width=50, command=self.get_traintocsv)
         self.btn_savecsv.pack(anchor=tkinter.N, side="bottom", expand=True)
-
-        #check button for Face Swap
+        # Check button for Face modification object
         self.list_itmes = tkinter.StringVar()
         self.list_itmes.set(('glass', 'clown'))
         self.filterchoose = tkinter.Listbox(window, listvariable=self.list_itmes, width=30, height=3, justify="center")
         self.filterchoose.pack(side="bottom")
-
+        # Button to Face modification
         self.btn_filter = tkinter.Button(window, text="Face Modifications", width=50, command=partial(self.setmode_filter, 3))
         self.btn_filter.pack(anchor=tkinter.N, side="bottom")
-
+        # Button for Face Swap
         self.btn_exchange = tkinter.Button(window, text="Face Swap", width=50, command=partial(self.setmode, 2))
         self.btn_exchange.pack(anchor=tkinter.N, side="bottom")
-
+        # Button to face detect
         self.btn_detect = tkinter.Button(window, text="Face Detect", width=50, command=partial(self.setmode, 1))
         self.btn_detect.pack(anchor=tkinter.N, side="bottom")
-
+        # Button to grayscale
         self.button0 = tkinter.Button(window, text="Grayscale", width=50, command=partial(self.setmode, 0))
         self.button0.pack(anchor=tkinter.N, side="bottom")
-
+        # Button to snapshot
         self.btn_snapshot=tkinter.Button(window, text="Snapshot", width=50, command=self.snapshot)
         self.btn_snapshot.pack(anchor=tkinter.N, side="bottom", expand=True)
 
         self.vid = MyVideoCapture(self.video_source)
-        # text
+        # define text
         self.Text = tkinter.Text(window, wrap='word', width=120, height=5)
         self.Text.pack(fill="both", anchor=tkinter.SW, side="bottom")
         self.Text.tag_configure('stderr', foreground='#b22222')
@@ -95,13 +97,16 @@ class App:
         self.update()
         self.window.mainloop()
 
+    # Snapshot function
     def snapshot(self):
         ret, frame = self.vid.get_frame()
         if ret:
             cv2.imwrite("../"+"data/test/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    # Set gui running mode
     def setmode(self, number):
         self.mode = number
 
+    # Set filtered object
     def setmode_filter(self, number):
         select = self.filterchoose.curselection()
         text = self.filterchoose.get(select)
@@ -116,6 +121,7 @@ class App:
             if_glass = False
         self.mode = number
 
+    # main frame update
     def update(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
@@ -156,9 +162,9 @@ class App:
             writer = csv.writer(f)
             writer.writerows(targets)
 
-    # matching image for current videostream faces
+    # matching image for current video stream faces
     def getmatching_image(self):
-        # snapshot for current videostream
+        # snapshot for current video stream
         self.snapshot()
         print('snapshot finished')
         print('start Matching')
