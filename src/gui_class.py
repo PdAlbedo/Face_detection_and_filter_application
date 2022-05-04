@@ -1,5 +1,6 @@
 """
-Classes used in GUI
+Description: Classes used in our GUI including: Tkinter GUI,
+OpenCV real-time feeds, and printing terminal text in GUI
 """
 __author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
