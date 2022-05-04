@@ -1,5 +1,5 @@
 """
-Main function of application
+Description: ain function of application
 """
 __author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
