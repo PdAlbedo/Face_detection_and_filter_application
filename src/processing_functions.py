@@ -1,7 +1,12 @@
 """
+CS5330 - Pattern Recognition & Computer Vision
+Project Title: Face detection and filter application
+April 18, 2022
+Team: Sida Zhang, Xichen Liu, Xiang Wang, Hongyu Wan
+
 Description: Basic calculations and formulas used in the program.
 Including but not limit to: face drawing, transofrmation,
- ssd and knn where the k parameter is 1, and building embedding space
+ssd and knn where the k parameter is 1, and building embedding space
 """
 __author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
