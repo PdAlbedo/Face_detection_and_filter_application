@@ -1,5 +1,6 @@
 """
-Functions that implement the functionalities
+Description: Functionalities of the program including detecting face,
+greyscale, snapshot, and filters application
 """
 __author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
