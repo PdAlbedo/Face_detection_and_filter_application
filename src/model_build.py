@@ -1,5 +1,5 @@
 """
-Structure of the model network and its classes.
+Description: Structure of the model network and its classes.
 """
 __author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
