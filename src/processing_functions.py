@@ -1,5 +1,7 @@
 """
-Basic functions used in intermediate level functions
+Description: Basic calculations and formulas used in the program.
+Including but not limit to: face drawing, transofrmation,
+ ssd and knn where the k parameter is 1, and building embedding space
 """
 __author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
 
