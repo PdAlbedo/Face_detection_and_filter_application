@@ -28,7 +28,7 @@ Projectr Structure:
         -   livevideo_gui.py (main)
         -   model_build.py
         -   processing_function.py 
-      - readme.md
+      - readme.txt
 
 
 Description:
