@@ -1,4 +1,9 @@
 """
+CS5330 - Pattern Recognition & Computer Vision
+Project Title: Face detection and filter application
+April 18, 2022
+Team: Sida Zhang, Xichen Liu, Xiang Wang, Hongyu Wan
+
 Description: Functionalities of the program including detecting face,
 greyscale, snapshot, and filters application
 """
