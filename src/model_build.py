@@ -1,4 +1,9 @@
 """
+CS5330 - Pattern Recognition & Computer Vision
+Project Title: Face detection and filter application
+April 18, 2022
+Team: Sida Zhang, Xichen Liu, Xiang Wang, Hongyu Wan
+
 Description: Structure of the model network and its classes.
 """
 __author__ = "Sida Zhang, Hongyu Wan, Xiang Wang, Xichen Liu"
