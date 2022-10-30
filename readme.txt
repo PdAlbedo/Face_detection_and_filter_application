@@ -1,4 +1,4 @@
-# CS5330 - Pattern Recognition & Computer Vision-
+# CS5330 - Pattern Recognition & Computer Vision
 # Final Project: Face detection and filter application
 # Project Title: Face detection and filter application
 # April 18, 2022
